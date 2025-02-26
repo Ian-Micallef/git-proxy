@@ -1,0 +1,8 @@
+org/finos/gitproxy/config/GitProxyConfig$AuthorisedRepo.class
+org/finos/gitproxy/config/GitProxyConfig$TempPassword.class
+org/finos/gitproxy/config/GitProxyConfig$Database.class
+org/finos/gitproxy/GitProxyApplication.class
+org/finos/gitproxy/config/GitProxyConfig$Authentication.class
+org/finos/gitproxy/config/ConfigValidator.class
+org/finos/gitproxy/config/GitProxyConfig.class
+org/finos/gitproxy/config/EnvVars.class

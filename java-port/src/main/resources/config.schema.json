@@ -1,0 +1,115 @@
+{
+  "$schema": "https://json-schema.org/draft-07/schema",
+  "$id": "https://git-proxy.finos.org/config.schema.json",
+  "title": "GitProxy configuration file",
+  "description": "Configuration for customizing git-proxy",
+  "type": "object",
+  "properties": {
+    "proxyUrl": { "type": "string" },
+    "cookieSecret": { "type": "string" },
+    "sessionMaxAgeHours": { "type": "number" },
+    "api": {
+      "description": "Third party APIs",
+      "type": "object"
+    },
+    "commitConfig": {
+      "description": "Enforce rules and patterns on commits including e-mail and message",
+      "type": "object"
+    },
+    "attestationConfig": {
+      "description": "Customisable questions to add to attestation form",
+      "type": "object"
+    },
+    "domains": {
+      "description": "Provide domains to use alternative to the defaults",
+      "type": "object"
+    },
+    "privateOrganizations": {
+      "description": "Pattern searches for listed private organizations are disabled",
+      "type": "array"
+    },
+    "urlShortener": {
+      "description": "Customisable URL shortener to share in proxy responses and warnings",
+      "type": "string"
+    },
+    "contactEmail": {
+      "description": "Customisable e-mail address to share in proxy responses and warnings",
+      "type": "string"
+    },
+    "csrfProtection": {
+      "description": "Flag to enable CSRF protections for UI",
+      "type": "boolean"
+    },
+    "plugins": {
+      "type": "array",
+      "description": "List of plugins to integrate on GitProxy's push or pull actions. Each value is either a file path or a module name.",
+      "items": {
+        "type": "string"
+      }
+    },
+    "authorisedList": {
+      "description": "List of repositories that are authorised to be pushed to through the proxy.",
+      "type": "array",
+      "items": {
+        "$ref": "#/definitions/authorisedRepo"
+      }
+    },
+    "sink": {
+      "description": "List of database sources. The first source in the configuration with enabled=true will be used.",
+      "type": "array",
+      "items": {
+        "$ref": "#/definitions/database"
+      }
+    },
+    "authentication": {
+      "description": "List of authentication sources. The first source in the configuration with enabled=true will be used.",
+      "type": "array",
+      "items": {
+        "$ref": "#/definitions/authentication"
+      }
+    },
+    "tempPassword": {
+      "description": "Toggle the generation of temporary password for git-proxy admin user",
+      "type": "object",
+      "properties": {
+        "sendEmail": { "type": "boolean" },
+        "emailConfig": {
+          "description": "Generic object to configure nodemailer. For full type information, please see https://github.com/DefinitelyTyped/DefinitelyTyped/tree/master/types/nodemailer",
+          "type": "object"
+        }
+      }
+    }
+  },
+  "definitions": {
+    "authorisedRepo": {
+      "type": "object",
+      "properties": {
+        "project": { "type": "string" },
+        "name": { "type": "string" },
+        "url": { "type": "string" }
+      },
+      "required": ["project", "name", "url"]
+    },
+    "database": {
+      "type": "object",
+      "properties": {
+        "type": { "type": "string" },
+        "enabled": { "type": "boolean" },
+        "connectionString": { "type": "string" },
+        "options": { "type": "object" },
+        "params": { "type": "object" }
+      },
+      "required": ["type", "enabled"]
+    },
+    "authentication": {
+      "type": "object",
+      "properties": {
+        "type": { "type": "string" },
+        "enabled": { "type": "boolean" },
+        "options": { "type": "object" }
+      },
+      "required": ["type", "enabled"]
+    }
+  },
+  "additionalProperties": false
+}

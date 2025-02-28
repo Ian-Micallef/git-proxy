@@ -1,12 +1,12 @@
 import React, { useState } from 'react';
-import { Routes, Route, Navigate, useParams } from 'react-router-dom';
+import { useParams } from 'react-router-dom';
 import PerfectScrollbar from 'perfect-scrollbar';
 import 'perfect-scrollbar/css/perfect-scrollbar.css';
 import { makeStyles } from '@material-ui/core/styles';
 import Navbar from '../components/Navbars/Navbar';
 import Footer from '../components/Footer/Footer';
 import Sidebar from '../components/Sidebar/Sidebar';
-import ProtectedRoute from '../components/ProtectedRoute/ProtectedRoute';
+import SwitchRoutes from '../components/Routes/SwitchRoutes';
 import routes from '../../routes';
 import styles from '../assets/jss/material-dashboard-react/layouts/adminStyle';
 import logo from '../assets/img/git-proxy.png';
@@ -27,33 +27,6 @@ export default function Admin({ ...rest }) {
   const [color] = React.useState('blue');
   const [mobileOpen, setMobileOpen] = React.useState(false);
   const [user, setUser] = useState({});
-  
-  // Define switchRoutes inside the component to access the user state
-  const switchRoutes = (
-    <Routes>
-      {routes.map((prop, key) => {
-        if (prop.layout === '/admin') {
-          // Use ProtectedRoute for routes that require authorization
-          return (
-            <Route
-              exact
-              path={prop.path}
-              key={key}
-              element={
-                <ProtectedRoute
-                  user={user}
-                  path={`/admin${prop.path}`}
-                  component={prop.component}
-                />
-              }
-            />
-          );
-        }
-        return null;
-      })}
-      <Route exact path='/admin' element={<Navigate to='/admin/repo' />} />
-    </Routes>
-  );
 
   const handleDrawerToggle = () => {
     setMobileOpen(!mobileOpen);
@@ -115,10 +88,14 @@ export default function Admin({ ...rest }) {
           {/* On the /maps route we want the map to be on full screen - this is not possible if the content and conatiner classes are present because they have some paddings which would make the map smaller */}
           {getRoute() ? (
             <div className={classes.content}>
-              <div className={classes.container}>{switchRoutes}</div>
+              <div className={classes.container}>
+                <SwitchRoutes user={user} routes={routes} />
+              </div>
             </div>
           ) : (
-            <div className={classes.map}>{switchRoutes}</div>
+            <div className={classes.map}>
+              <SwitchRoutes user={user} routes={routes} />
+            </div>
           )}
           {getRoute() ? <Footer /> : null}
         </div>

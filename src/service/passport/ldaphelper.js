@@ -22,6 +22,54 @@ const isUserInAdGroup = (id, domain, name) => {
     });
 };
 
+/**
+ * Check if a user is in any of the specified AD groups
+ * @param {string} id - User ID
+ * @param {string} domain - Domain
+ * @param {Array<string>} groups - Array of group names to check
+ * @return {Promise<boolean>} - True if user is in any of the groups, false otherwise
+ */
+const isUserInAnyAdGroup = async (id, domain, groups) => {
+  if (!Array.isArray(groups) || groups.length === 0) {
+    return false;
+  }
+
+  try {
+    const results = await Promise.all(
+      groups.map((group) => isUserInAdGroup(id, domain, group))
+    );
+    return results.some((result) => result === true);
+  } catch (error) {
+    console.error(`Error checking user groups: ${error.message}`);
+    return false;
+  }
+};
+
+/**
+ * Check if a user is in all of the specified AD groups
+ * @param {string} id - User ID
+ * @param {string} domain - Domain
+ * @param {Array<string>} groups - Array of group names to check
+ * @return {Promise<boolean>} - True if user is in all of the groups, false otherwise
+ */
+const isUserInAllAdGroups = async (id, domain, groups) => {
+  if (!Array.isArray(groups) || groups.length === 0) {
+    return false;
+  }
+
+  try {
+    const results = await Promise.all(
+      groups.map((group) => isUserInAdGroup(id, domain, group))
+    );
+    return results.every((result) => result === true);
+  } catch (error) {
+    console.error(`Error checking user groups: ${error.message}`);
+    return false;
+  }
+};
+
 module.exports = {
   isUserInAdGroup,
+  isUserInAnyAdGroup,
+  isUserInAllAdGroups,
 };

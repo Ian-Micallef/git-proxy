@@ -6,6 +6,7 @@ import { makeStyles } from '@material-ui/core/styles';
 import Navbar from '../components/Navbars/Navbar';
 import Footer from '../components/Footer/Footer';
 import Sidebar from '../components/Sidebar/Sidebar';
+import ProtectedRoute from '../components/ProtectedRoute/ProtectedRoute';
 import routes from '../../routes';
 import styles from '../assets/jss/material-dashboard-react/layouts/adminStyle';
 import logo from '../assets/img/git-proxy.png';
@@ -14,18 +15,6 @@ import { getUser } from '../services/user';
 
 let ps;
 let refresh = false;
-
-const switchRoutes = (
-  <Routes>
-    {routes.map((prop, key) => {
-      if (prop.layout === '/admin') {
-        return <Route exact path={prop.path} element={<prop.component />} key={key} />;
-      }
-      return null;
-    })}
-    <Route exact path='/admin' element={<Navigate to='/admin/repo' />} />
-  </Routes>
-);
 
 const useStyles = makeStyles(styles);
 
@@ -38,6 +27,33 @@ export default function Admin({ ...rest }) {
   const [color] = React.useState('blue');
   const [mobileOpen, setMobileOpen] = React.useState(false);
   const [user, setUser] = useState({});
+  
+  // Define switchRoutes inside the component to access the user state
+  const switchRoutes = (
+    <Routes>
+      {routes.map((prop, key) => {
+        if (prop.layout === '/admin') {
+          // Use ProtectedRoute for routes that require authorization
+          return (
+            <Route
+              exact
+              path={prop.path}
+              key={key}
+              element={
+                <ProtectedRoute
+                  user={user}
+                  path={`/admin${prop.path}`}
+                  component={prop.component}
+                />
+              }
+            />
+          );
+        }
+        return null;
+      })}
+      <Route exact path='/admin' element={<Navigate to='/admin/repo' />} />
+    </Routes>
+  );
 
   const handleDrawerToggle = () => {
     setMobileOpen(!mobileOpen);

@@ -115,6 +115,17 @@ describe('user configuration', function () {
 describe('validate config files', function () {
   const config = require('../src/config/file');
 
+  it('should handle missing config file gracefully', function () {
+    const nonExistentFile = path.join(process.cwd(), 'non-existent-file.json');
+    require('../src/config/file').configFile = nonExistentFile;
+    
+    // This should not throw an error
+    expect(config.validate()).to.be.true;
+    
+    // Reset the config file path
+    require('../src/config/file').configFile = undefined;
+  });
+
   it('all valid config files should pass validation', function () {
     const validConfigFiles = [
       'proxy.config.valid-1.json',

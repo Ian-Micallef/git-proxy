@@ -13,6 +13,12 @@ function validate(configFilePath = configFile) {
   const path = require('path');
   const validate = require('jsonschema').validate;
 
+  // Check if the config file exists
+  if (!fs.existsSync(configFilePath)) {
+    console.warn(`Config file ${configFilePath} not found, using default configuration.`);
+    return true;
+  }
+
   const config = JSON.parse(fs.readFileSync(configFilePath));
   const schema = JSON.parse(
     fs.readFileSync(path.join(__dirname, '..', '..', 'config.schema.json')),

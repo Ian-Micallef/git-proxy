@@ -33,6 +33,24 @@ describe('user configuration', function () {
     tempUserFile = path.join(tempDir, 'test-settings.json');
     require('../src/config/file').configFile = tempUserFile;
   });
+  
+  it('should use environment variable for cookie secret if available', function () {
+    // Create a dummy settings file to avoid file not found errors
+    fs.writeFileSync(tempUserFile, JSON.stringify({}));
+    
+    process.env.GIT_PROXY_COOKIE_SECRET = 'test-secret';
+    
+    // Clear the require cache to ensure the module is reloaded
+    delete require.cache[require.resolve('../src/config')];
+    delete require.cache[require.resolve('../src/config/env')];
+    
+    const config = require('../src/config');
+    
+    expect(config.getCookieSecret()).to.be.eql('test-secret');
+    
+    // Clean up
+    delete process.env.GIT_PROXY_COOKIE_SECRET;
+  });
 
   it('should override default settings for authorisedList', function () {
     const user = {

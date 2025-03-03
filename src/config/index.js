@@ -2,6 +2,7 @@ const fs = require('fs');
 
 const defaultSettings = require('../../proxy.config.json');
 const userSettingsPath = require('./file').configFile;
+const { Vars } = require('./env');
 
 let _userSettings = null;
 if (fs.existsSync(userSettingsPath)) {
@@ -101,6 +102,9 @@ const getAPIs = () => {
 };
 
 const getCookieSecret = () => {
+  if (Vars.GIT_PROXY_COOKIE_SECRET) {
+    return Vars.GIT_PROXY_COOKIE_SECRET;
+  }
   if (_userSettings && _userSettings.cookieSecret) {
     _cookieSecret = _userSettings.cookieSecret;
   }

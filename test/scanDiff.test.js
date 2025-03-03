@@ -69,6 +69,10 @@ describe('Scan commit diff...', async () => {
         "GitHub Fine Grained Personal Access Token": "github_pat_[a-zA-Z0-9]{22}_[a-zA-Z0-9]{59}",
         "GitHub Actions Token": "ghs_[a-zA-Z0-9]{36}",
         "JSON Web Token (JWT)": "ey[A-Za-z0-9-_=]{18,}.ey[A-Za-z0-9-_=]{18,}.[A-Za-z0-9-_.]{18,}"
+      },
+      "files": {
+        "literals": ["blocked-file.txt"],
+        "patterns": ["**/secrets/**"]
       }
     }
   
@@ -269,6 +273,71 @@ describe('Scan commit diff...', async () => {
       {
         stepName: 'diff',
         content: generateDiff('AKIAIOSFODNN7EXAMPLE'),
+      },
+    ];
+
+    const { error } = await processor.exec(null, action);
+    expect(error).to.be.false;
+  });
+
+  it('A diff with a file matching a blocked literal filename blocks the proxy...', async () => {
+    const action = new Action('1', 'type', 'method', 1, 'project/name');
+    action.steps = [
+      {
+        stepName: 'diff',
+        content: `diff --git a/blocked-file.txt b/blocked-file.txt
+index 38cdc3e..8a9c321 100644
+--- a/blocked-file.txt
++++ b/blocked-file.txt
+@@ -1,1 +1,1 @@
+-test
++updated test`,
+      },
+    ];
+
+    const { error, errorMessage } = await processor.exec(null, action);
+
+    expect(error).to.be.true;
+    expect(errorMessage).to.contains('Your push has been blocked');
+    expect(errorMessage).to.contains('Blocked File');
+    expect(errorMessage).to.contains('blocked-file.txt');
+  });
+
+  it('A diff with a file matching a blocked pattern blocks the proxy...', async () => {
+    const action = new Action('1', 'type', 'method', 1, 'project/name');
+    action.steps = [
+      {
+        stepName: 'diff',
+        content: `diff --git a/src/secrets/config.js b/src/secrets/config.js
+index 38cdc3e..8a9c321 100644
+--- a/src/secrets/config.js
++++ b/src/secrets/config.js
+@@ -1,1 +1,1 @@
+-const secret = 'test';
++const secret = 'updated';`,
+      },
+    ];
+
+    const { error, errorMessage } = await processor.exec(null, action);
+
+    expect(error).to.be.true;
+    expect(errorMessage).to.contains('Your push has been blocked');
+    expect(errorMessage).to.contains('Blocked File Pattern');
+    expect(errorMessage).to.contains('**/secrets/**');
+  });
+
+  it('A diff with a file not matching any blocked pattern or literal does not block the proxy...', async () => {
+    const action = new Action('1', 'type', 'method', 1, 'project/name');
+    action.steps = [
+      {
+        stepName: 'diff',
+        content: `diff --git a/src/public/app.js b/src/public/app.js
+index 38cdc3e..8a9c321 100644
+--- a/src/public/app.js
++++ b/src/public/app.js
+@@ -1,1 +1,1 @@
+-const app = 'test';
++const app = 'updated';`,
       },
     ];
 

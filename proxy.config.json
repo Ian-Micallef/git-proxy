@@ -77,7 +77,11 @@
       "block": {
         "literals": [],
         "patterns": [],
-        "providers": {}
+        "providers": {},
+        "files": {
+          "literals": [],
+          "patterns": []
+        }
       }
     }
   },

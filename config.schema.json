@@ -14,7 +14,41 @@
     },
     "commitConfig": {
       "description": "Enforce rules and patterns on commits including e-mail and message",
-      "type": "object"
+      "type": "object",
+      "properties": {
+        "author": { "type": "object" },
+        "message": { "type": "object" },
+        "diff": {
+          "type": "object",
+          "properties": {
+            "block": {
+              "type": "object",
+              "properties": {
+                "literals": { "type": "array" },
+                "patterns": { "type": "array" },
+                "providers": { "type": "object" },
+                "files": {
+                  "type": "object",
+                  "properties": {
+                    "literals": {
+                      "type": "array",
+                      "items": {
+                        "type": "string"
+                      }
+                    },
+                    "patterns": {
+                      "type": "array",
+                      "items": {
+                        "type": "string"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
     },
     "attestationConfig": {
       "description": "Customisable questions to add to attestation form",

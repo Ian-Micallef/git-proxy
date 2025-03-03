@@ -1,6 +1,7 @@
 const Step = require('../../actions').Step;
 const config = require('../../../config');
-const parseDiff = require('parse-diff')
+const parseDiff = require('parse-diff');
+const { minimatch } = require('minimatch');
 
 const commitConfig = config.getCommitConfig();
 const privateOrganizations = config.getPrivateOrganizations();
@@ -40,6 +41,41 @@ const getDiffViolations = (diff, organization) => {
   return null;
 };
 
+const shouldBlockFile = (fileName) => {
+  if (!commitConfig.diff.block.files) {
+    return false;
+  }
+
+  // Check literal matches
+  if (commitConfig.diff.block.files.literals && 
+      commitConfig.diff.block.files.literals.includes(fileName)) {
+    return {
+      type: 'Blocked File',
+      literal: fileName,
+      file: fileName,
+      lines: 'all',
+      content: `File matches blocked literal: ${fileName}`
+    };
+  }
+  
+  // Check pattern matches
+  if (commitConfig.diff.block.files.patterns) {
+    for (const pattern of commitConfig.diff.block.files.patterns) {
+      if (minimatch(fileName, pattern)) {
+        return {
+          type: 'Blocked File Pattern',
+          literal: pattern,
+          file: fileName,
+          lines: 'all',
+          content: `File matches blocked pattern: ${pattern}`
+        };
+      }
+    }
+  }
+  
+  return false;
+};
+
 const combineMatches = (organization) => {
 
   // Configured blocked literals
@@ -75,6 +111,13 @@ const collectMatches = (parsedDiff, combinedMatches) => {
   parsedDiff.forEach(file => {
     const fileName = file.to || file.from;
     console.log("CHANGE", file.chunks)
+    
+    // Check if the file itself should be blocked
+    const fileBlockResult = shouldBlockFile(fileName);
+    if (fileBlockResult) {
+      const matchKey = `FILE_BLOCK_${fileName}`;
+      allMatches[matchKey] = fileBlockResult;
+    }
 
     file.chunks.forEach(chunk => {
       chunk.changes.forEach(change => {
@@ -112,10 +155,15 @@ const collectMatches = (parsedDiff, combinedMatches) => {
   });
 
   // convert matches into  a final result array, joining line numbers
-  const result = Object.values(allMatches).map(match => ({
-    ...match,
-    lines: match.lines.join(',') // join the line numbers into a comma-separated string
-  }))
+  const result = Object.values(allMatches).map(match => {
+    if (match.lines && Array.isArray(match.lines)) {
+      return {
+        ...match,
+        lines: match.lines.join(',') // join the line numbers into a comma-separated string
+      };
+    }
+    return match; // For file blocks, lines is already a string ('all')
+  });
 
   console.log("RESULT", result)
   return result;

@@ -14,7 +14,7 @@ import CardFooter from '../../components/Card/CardFooter';
 import axios from 'axios';
 import { Navigate } from 'react-router-dom';
 import logo from '../../assets/img/git-proxy.png';
-import { Badge, CircularProgress, Snackbar } from '@material-ui/core';
+import { Badge, CircularProgress, Snackbar, Typography } from '@material-ui/core';
 import { getCookie } from '../../utils';
 
 const loginUrl = `${import.meta.env.VITE_API_URI}/api/auth/login`;
@@ -26,15 +26,27 @@ export default function UserProfile() {
   const [success, setSuccess] = useState(false);
   const [gitAccountError, setGitAccountError] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
+  const [requireMFA, setRequireMFA] = useState(false);
+  const [mfaCode, setMfaCode] = useState('');
+  // const [mfaPendingUser, setMfaPendingUser] = useState('');
+  const [mfaError, setMfaError] = useState(false);
 
   function validateForm() {
     return (
       username.length > 0 && username.length < 100 && password.length > 0 && password.length < 200
     );
   }
+  
+  function validateMfaForm() {
+    return mfaCode.length > 0 && mfaCode.length <= 6;
+  }
 
   function handleSubmit(event) {
+    event.preventDefault();
     setIsLoading(true);
+    setMessage('');
+    setMfaError(false);
+    
     axios
       .post(
         loginUrl,
@@ -50,11 +62,19 @@ export default function UserProfile() {
           },
         },
       )
-      .then(function () {
-        window.sessionStorage.setItem('git.proxy.login', 'success');
-        setMessage('Success!');
-        setSuccess(true);
-        setIsLoading(false);
+      .then(function (response) {
+        if (response.data.requireMFA) {
+          // MFA required
+          setRequireMFA(true);
+          // Store username in session, no need to track locally
+          setIsLoading(false);
+        } else {
+          // Standard login successful
+          window.sessionStorage.setItem('git.proxy.login', 'success');
+          setMessage('Success!');
+          setSuccess(true);
+          setIsLoading(false);
+        }
       })
       .catch(function (error) {
         if (error.response.status === 307) {
@@ -67,8 +87,43 @@ export default function UserProfile() {
         }
         setIsLoading(false);
       });
-
+  }
+  
+  function handleMfaSubmit(event) {
     event.preventDefault();
+    setIsLoading(true);
+    setMfaError(false);
+    
+    const mfaValidateUrl = `${import.meta.env.VITE_API_URI}/api/auth/mfa/validate`;
+    
+    axios
+      .post(
+        mfaValidateUrl,
+        {
+          token: mfaCode
+        },
+        {
+          withCredentials: true,
+          headers: {
+            'Content-Type': 'application/json',
+            'X-CSRF-TOKEN': getCookie('csrf'),
+          },
+        },
+      )
+      .then(function (response) {
+        if (response.data.success) {
+          // MFA successful
+          window.sessionStorage.setItem('git.proxy.login', 'success');
+          setMessage('Success!');
+          setSuccess(true);
+          setIsLoading(false);
+        }
+      })
+      .catch(function (error) {
+        setMfaError(true);
+        setMessage('Invalid verification code. Please try again.');
+        setIsLoading(false);
+      });
   }
 
   if (gitAccountError) {
@@ -79,7 +134,7 @@ export default function UserProfile() {
   }
 
   return (
-    <form onSubmit={handleSubmit}>
+    <form onSubmit={requireMFA ? handleMfaSubmit : handleSubmit}>
       <Snackbar
         open={!!message}
         message={message}
@@ -109,45 +164,100 @@ export default function UserProfile() {
               </div>
             </CardHeader>
             <CardBody>
-              <GridContainer>
-                <GridItem xs={6} sm={6} md={6}>
-                  <FormControl>
-                    <InputLabel>Username</InputLabel>
-                    <Input
-                      id='username'
-                      type='username'
-                      value={username}
-                      onChange={(e) => setUsername(e.target.value)}
-                      autoFocus={true}
-                      data-test ='username'
-                    />
-                  </FormControl>
-                </GridItem>
-              </GridContainer>
-              <GridContainer>
-                <GridItem xs={6} sm={6} md={6}>
-                  <FormControl>
-                    <InputLabel>Password</InputLabel>
-                    <Input
-                      id='password'
-                      type='password'
-                      value={password}
-                      onChange={(e) => setPassword(e.target.value)}
-                      data-test ='password'
-                    />
-                  </FormControl>
-                </GridItem>
-              </GridContainer>
+              {!requireMFA ? (
+                // Standard login form
+                <>
+                  <GridContainer>
+                    <GridItem xs={6} sm={6} md={6}>
+                      <FormControl>
+                        <InputLabel>Username</InputLabel>
+                        <Input
+                          id='username'
+                          type='username'
+                          value={username}
+                          onChange={(e) => setUsername(e.target.value)}
+                          autoFocus={true}
+                          data-test ='username'
+                        />
+                      </FormControl>
+                    </GridItem>
+                  </GridContainer>
+                  <GridContainer>
+                    <GridItem xs={6} sm={6} md={6}>
+                      <FormControl>
+                        <InputLabel>Password</InputLabel>
+                        <Input
+                          id='password'
+                          type='password'
+                          value={password}
+                          onChange={(e) => setPassword(e.target.value)}
+                          data-test ='password'
+                        />
+                      </FormControl>
+                    </GridItem>
+                  </GridContainer>
+                </>
+              ) : (
+                // MFA verification form
+                <>
+                  <GridContainer>
+                    <GridItem xs={12} sm={12} md={12}>
+                      <Typography variant="h6" style={{ marginBottom: '16px' }}>
+                        Two-Factor Authentication
+                      </Typography>
+                      <Typography variant="body1" style={{ marginBottom: '16px' }}>
+                        Please enter the verification code from your authenticator app.
+                      </Typography>
+                    </GridItem>
+                  </GridContainer>
+                  <GridContainer>
+                    <GridItem xs={6} sm={6} md={6}>
+                      <FormControl error={mfaError}>
+                        <InputLabel>Verification Code</InputLabel>
+                        <Input
+                          id='mfaCode'
+                          type='text'
+                          value={mfaCode}
+                          onChange={(e) => setMfaCode(e.target.value)}
+                          autoFocus={true}
+                          data-test='mfa-code'
+                          inputProps={{ maxLength: 6 }}
+                        />
+                      </FormControl>
+                    </GridItem>
+                  </GridContainer>
+                </>
+              )}
             </CardBody>
             <CardFooter>
               {!isLoading ? (
-                <Button color='success' block disabled={!validateForm()} type='submit' data-test="login">
-                  Login
+                <Button 
+                  color='success' 
+                  block 
+                  disabled={requireMFA ? !validateMfaForm() : !validateForm()} 
+                  type='submit' 
+                  data-test={requireMFA ? "verify-mfa" : "login"}
+                >
+                  {requireMFA ? 'Verify' : 'Login'}
                 </Button>
               ) : (
                 <div style={{ textAlign: 'center', width: '100%', opacity: 0.5, color: 'green' }}>
                   <CircularProgress color='inherit' />
                 </div>
+              )}
+              {requireMFA && (
+                <Button 
+                  color='default' 
+                  block 
+                  onClick={() => {
+                    setRequireMFA(false);
+                    setMfaCode('');
+                    setMfaError(false);
+                  }}
+                  style={{ marginTop: '8px' }}
+                >
+                  Back to Login
+                </Button>
               )}
             </CardFooter>
           </Card>

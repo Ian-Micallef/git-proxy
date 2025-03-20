@@ -11,8 +11,9 @@ import { makeStyles } from '@material-ui/core/styles';
 
 import { LogoGithubIcon } from '@primer/octicons-react';
 import CloseRounded from '@material-ui/icons/CloseRounded';
-import { Check, Save } from '@material-ui/icons';
-import { TextField } from '@material-ui/core';
+import { Check, Save, Security } from '@material-ui/icons';
+import { TextField, Divider, Typography } from '@material-ui/core';
+import MFASetup from '../Settings/MFASetup';
 
 const useStyles = makeStyles((theme) => ({
   root: {
@@ -159,6 +160,24 @@ export default function Dashboard() {
                         onChange={(e) => setGitAccount(e.target.value)}
                       />
                       <UpdateButton />
+                    </div>
+                  </div>
+                  
+                  {/* MFA Setup Section */}
+                  <div style={{ marginTop: '50px' }}>
+                    <Divider />
+                    <div style={{ marginTop: '25px' }}>
+                      <Typography variant="h6" style={{ display: 'flex', alignItems: 'center' }}>
+                        <Security style={{ marginRight: '8px' }} /> Security Settings
+                      </Typography>
+                      <MFASetup 
+                        user={data} 
+                        onMFAStatusChange={(enabled) => {
+                          const updatedData = {...data};
+                          updatedData.mfaEnabled = enabled;
+                          setData(updatedData);
+                        }} 
+                      />
                     </div>
                   </div>
                 </div>

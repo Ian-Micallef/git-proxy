@@ -47,6 +47,14 @@ exports.deleteUser = function (username) {
 };
 
 exports.updateUser = function (user) {
+  // Ensure MFA fields exist if not present
+  if (user.mfaEnabled === undefined) {
+    user.mfaEnabled = false;
+  }
+  if (user.mfaSecret === undefined) {
+    user.mfaSecret = null;
+  }
+  
   return new Promise((resolve, reject) => {
     const options = { multi: false, upsert: false };
     db.update({ username: user.username }, user, options, (err) => {

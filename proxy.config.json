@@ -49,6 +49,11 @@
         "baseDN": "",
         "searchBase": ""
       }
+    },
+    {
+      "type": "totp",
+      "enabled": true,
+      "issuer": "GitProxy"
     }
   ],
   "api": {

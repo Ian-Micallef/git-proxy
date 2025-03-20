@@ -25,6 +25,15 @@ exports.createUser = async function (data) {
 
 exports.updateUser = async (user) => {
   user.username = user.username.toLowerCase();
+  
+  // Ensure MFA fields exist if not present
+  if (user.mfaEnabled === undefined) {
+    user.mfaEnabled = false;
+  }
+  if (user.mfaSecret === undefined) {
+    user.mfaSecret = null;
+  }
+  
   const options = { upsert: true };
   const collection = await connect(usersCollection);
   await collection.updateOne({ username: user.username }, { $set: user }, options);
